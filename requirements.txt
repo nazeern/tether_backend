@@ -1,0 +1,9 @@
+Flask==3.0.3
+multiprocess==0.70.16
+numpy==1.26.4
+opencv_python==4.9.0.80
+pytest==8.1.1
+pytest_mock==3.14.0
+scikit_learn==1.4.2
+scipy==1.13.0
+gunicorn==21.2.0

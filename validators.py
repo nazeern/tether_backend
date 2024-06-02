@@ -29,8 +29,6 @@ class ImageValidator():
 
         y, x = arr.shape[:2]
 
-        print(self.xmax, self.ymax)
-
         if x > self.xmax or y > self.ymax:
             return None, "Image exceeds maximum dimensions"
 

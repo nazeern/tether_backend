@@ -6,6 +6,7 @@ import cv2
 from sklearn import decomposition
 import multiprocess as mp
 from typing import Any
+from scipy.signal import convolve2d, medfilt2d
 
 
 def join_sublists(
@@ -257,3 +258,83 @@ class Flatten(Transformer):
         arr: np.ndarray,
     ):
         return arr.flatten()
+    
+
+@dataclass
+class GaussianFilter(Transformer):
+    """
+    A class to apply a gaussian filter on an image.
+    """
+    optype: ClassVar[str] = "gaussian filter"
+    size: int
+    sigma: float
+
+    def gkern(self, l=5, sig=1.):
+        """
+        creates gaussian kernel with side length `l` and a sigma of `sig`
+        """
+        ax = np.linspace(-(l - 1) / 2., (l - 1) / 2., l)
+        gauss = np.exp(-0.5 * np.square(ax) / np.square(sig))
+        kernel = np.outer(gauss, gauss)
+        return kernel / np.sum(kernel)
+
+    def transform(
+        self,
+        arr: np.ndarray,
+    ):
+        kernel = self.gkern(l=self.size, sig=self.sigma)
+        return convolve2d(arr, kernel, mode="valid")
+
+
+@dataclass
+class MedianFilter(Transformer):
+    """
+    A class to apply a median filter on an image.
+    """
+    optype: ClassVar[str] = "median filter"
+    size: int
+
+    def transform(
+        self,
+        arr: np.ndarray,
+    ):
+        assert self.size % 2 == 1, "Median filter must have odd size"
+        return medfilt2d(arr, kernel_size=self.size)
+
+
+@dataclass
+class Gradient(Transformer):
+    """
+    A class to apply a gradient on an image.
+    """
+    optype: ClassVar[str] = "gradient"
+
+    def transform(
+        self,
+        arr: np.ndarray,
+    ):
+        dx_kernel = np.array([[-1, 1]])
+        dy_kernel = np.array([[-1],
+                              [1]])
+        dx = convolve2d(arr, dx_kernel, mode="valid")[:-1]
+        dy = convolve2d(arr, dy_kernel, mode="valid")[:,:-1]
+
+        return np.sqrt(dx**2 + dy**2)
+        
+
+@dataclass
+class Threshold(Transformer):
+    """
+    A class to apply a threshold on an image.
+    """
+    optype: ClassVar[str] = "thresholding"
+    threshold: float
+
+    def transform(
+        self,
+        arr: np.ndarray,
+    ):
+        arr[arr > self.threshold] = 255
+        arr[arr <= self.threshold] = 0
+
+        return arr
